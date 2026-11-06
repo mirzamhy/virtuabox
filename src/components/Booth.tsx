@@ -122,11 +122,11 @@ export function Booth({
 
   useEffect(() => {
     alive.current = true;
-    // Entering: the curtain slides shut, then the lights click on (.intro in styles.css).
+    // Entering: the curtain opens, then the lights click on (.intro in styles.css).
     const timers: number[] = [];
     if (!reducedMotion()) {
-      curtain();
-      timers.push(window.setTimeout(lightClick, 1000));
+      timers.push(window.setTimeout(() => curtain(1.3), 350));
+      timers.push(window.setTimeout(lightClick, 1850));
     }
     // Retakes come straight back to a camera that was already allowed.
     if (lastDemo || retake) void start(lastDemo);

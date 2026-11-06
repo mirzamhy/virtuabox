@@ -765,6 +765,7 @@ img {
   position: relative;
   width: 8cqh;
   height: 8cqh;
+  margin-top: 3cqh; /* the LED ring sticks out ~2.7cqh above the lens */
   border-radius: 50%;
   background: #17191c;
   display: grid;
@@ -794,7 +795,7 @@ img {
   opacity: 0.7;
 }
 .screen-bezel {
-  width: min(86cqw, 86cqh * 4 / 3);
+  width: min(86cqw, 82cqh * 4 / 3);
   aspect-ratio: 4 / 3;
   background: var(--bezel);
   padding: 1.2cqh;
@@ -1187,17 +1188,17 @@ img {
   z-index: 4;
 }
 .room.intro .c-l {
-  animation: curtain-l 0.75s cubic-bezier(0.3, 0.9, 0.3, 1.05) both;
+  animation: curtain-l 1.75s cubic-bezier(0.45, 0, 0.25, 1) both;
 }
 .room.intro .c-r {
-  animation: curtain-r 0.75s cubic-bezier(0.3, 0.9, 0.3, 1.05) both;
+  animation: curtain-r 1.75s cubic-bezier(0.45, 0, 0.25, 1) both;
 }
 .room.intro .room-dark {
-  animation: lights 1.5s linear both;
+  animation: lights 2.4s linear both;
 }
 .room.intro .softbox,
 .room.intro .led {
-  animation: lamp-on 1.5s linear both;
+  animation: lamp-on 2.4s linear both;
 }
 
 /* ───────── monitor (zoomed touchscreen) ───────── */
@@ -1855,46 +1856,34 @@ img {
     border-color: rgba(255, 255, 255, 0.3);
   }
 }
-/* The curtain slides in from wider than the room (fully open) to its rest at the edges. */
+/* The curtain starts closed (two halves meeting in the middle), holds, then opens and
+   gathers at the edges. Timing matches Booth.tsx (sound at 0.35 s). */
 @keyframes curtain-l {
-  from {
-    width: 50%;
-    transform: translateX(-100%);
-  }
-  60% {
-    width: 50%;
-    transform: translateX(0);
+  0%,
+  20% {
+    width: 50.5%;
   }
 }
 @keyframes curtain-r {
-  from {
-    width: 50%;
-    transform: translateX(100%);
-  }
-  60% {
-    width: 50%;
-    transform: translateX(0);
+  0%,
+  20% {
+    width: 50.5%;
   }
 }
-/* 0–0.7 s light blocked by the curtain, 1.0 s click, flicker, on. */
+/* Dark booth while the curtain opens, 1.85 s click, flicker, lights on. */
 @keyframes lights {
-  0% {
-    opacity: 0;
+  0%,
+  76% {
+    opacity: 0.6;
   }
-  30% {
-    opacity: 0.55;
-  }
-  66% {
-    opacity: 0.72;
-  }
-  70% {
-    opacity: 0.15;
-  }
-  74% {
-    opacity: 0.5;
+  77.5% {
+    opacity: 0.12;
   }
   80% {
-    opacity: 0.05;
+    opacity: 0.45;
+  }
+  84% {
+    opacity: 0.04;
   }
   100% {
     opacity: 0;
@@ -1902,17 +1891,17 @@ img {
 }
 @keyframes lamp-on {
   0%,
-  66% {
+  76% {
     filter: brightness(0.35);
     box-shadow: none;
   }
-  70% {
+  77.5% {
     filter: brightness(1.2);
   }
-  74% {
+  80% {
     filter: brightness(0.5);
   }
-  80%,
+  84%,
   100% {
     filter: none;
   }
