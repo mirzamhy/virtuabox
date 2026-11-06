@@ -772,6 +772,7 @@ img {
   flex: none;
 }
 .lens {
+  position: relative;
   width: 52%;
   height: 52%;
   border-radius: 50%;
@@ -1045,6 +1046,37 @@ img {
   background: rgba(0, 0, 0, 0.55);
   padding: 1px 8px;
   border-radius: 999px;
+}
+
+/* ── LED ring around the lens: fills dot by dot during the countdown ── */
+.led-ring {
+  position: absolute;
+  inset: -34%;
+  width: 168%;
+  height: 168%;
+  overflow: visible;
+  pointer-events: none;
+}
+.led-ring circle {
+  fill: rgba(255, 255, 255, 0.13);
+}
+.led-ring .ring-plate {
+  fill: #1b1d21;
+  stroke: var(--trim);
+  stroke-width: 1.5;
+}
+.led-ring.run circle:not(.ring-plate) {
+  animation: led-on 0.18s ease-out forwards;
+}
+.lens-ring .lens-label {
+  left: calc(134% + 1.4cqw);
+}
+/* LED bars: brighter on the last second. */
+.led {
+  transition: box-shadow 0.3s, filter 0.3s;
+}
+.back.hot .led {
+  box-shadow: 0 0 34px 14px color-mix(in srgb, var(--led) 80%, transparent);
 }
 
 /* ── entering the booth: curtain slides shut, room goes dark, lights click on ── */
@@ -1649,6 +1681,15 @@ img {
 }
 
 /* ───────── keyframes ───────── */
+@keyframes led-on {
+  from {
+    fill: rgba(255, 255, 255, 0.13);
+  }
+  to {
+    fill: #fff;
+    filter: drop-shadow(0 0 2.5px #fff);
+  }
+}
 /* The curtain slides in from wider than the room (fully open) to its rest at the edges. */
 @keyframes curtain-l {
   from {
@@ -1897,7 +1938,8 @@ img {
     flex: 1 1 0;
     max-width: 34px;
   }
-  .crop-guide span {
+  .crop-guide span,
+  .lens-ring .lens-label {
     display: none;
   }
   .machine-row {

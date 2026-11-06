@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { Settings } from '../types';
 import { capture, startCamera, type Cam } from '../camera';
 import { STYLES, styleCss } from '../filters';
@@ -8,6 +8,7 @@ import { reducedMotion, wait } from '../motion';
 import { PROPS, drawProp, faceFrom, iconFace, loadTracker, smooth, type Face, type PropId } from '../props';
 
 const SCREEN_AR = 4 / 3; // camera frames are captured at 4:3
+const RING_DOTS = 16;
 
 // Remembered between booth visits.
 let lastProp: PropId = 'none';
@@ -74,6 +75,7 @@ export function Booth({
   const [demo, setDemo] = useState(false);
   const [thumbs, setThumbs] = useState<string[]>([]);
   const [count, setCount] = useState<number | null>(null);
+  const [ring, setRing] = useState(0); // bumps each countdown so the LED ring restarts
   const [flash, setFlash] = useState(0);
   const [busy, setBusy] = useState(false);
   const [auto, setAuto] = useState(true);
@@ -166,6 +168,7 @@ export function Booth({
   }, [propOn, cam]);
 
   const takeOne = async () => {
+    setRing((r) => r + 1);
     for (let s: number = settings.timer; s >= 1; s--) {
       if (!alive.current) return;
       setCount(s);
@@ -222,10 +225,30 @@ export function Booth({
         <div className="wall w-right" />
         <div className="wall w-floor" />
 
-        <div className="back">
+        <div className={`back ${count === 1 ? 'hot' : ''}`}>
           <i className="led led-l" />
           <i className="led led-r" />
           <div className="lens-ring" aria-hidden="true">
+            <svg
+              className={`led-ring ${count !== null ? 'run' : ''}`}
+              key={ring}
+              viewBox="-50 -50 100 100"
+              style={{ '--dur': `${settings.timer}s` } as CSSProperties}
+            >
+              <circle className="ring-plate" r={50} />
+              {Array.from({ length: RING_DOTS }, (_, i) => {
+                const a = (i / RING_DOTS) * Math.PI * 2 - Math.PI / 2;
+                return (
+                  <circle
+                    key={i}
+                    cx={44 * Math.cos(a)}
+                    cy={44 * Math.sin(a)}
+                    r={4.2}
+                    style={{ animationDelay: `calc(${i / RING_DOTS} * var(--dur))` }}
+                  />
+                );
+              })}
+            </svg>
             <i className="lens" />
             <span className="lens-label">LOOK HERE · SMILE</span>
           </div>
@@ -297,7 +320,7 @@ export function Booth({
               )}
 
               {count !== null && (
-                <div className="countdown" key={`${taken}-${count}`}>
+                <div className="countdown" key={`${ring}-${count}`}>
                   {count}
                 </div>
               )}
