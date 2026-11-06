@@ -1660,28 +1660,34 @@ img {
 }
 .roller {
   position: absolute;
-  left: 6%;
-  right: 6%;
+  left: 12px;
+  right: 12px;
   height: 14px;
   border-radius: 999px;
   background: linear-gradient(180deg, #4a4d52, #111 60%, #2a2c30);
   display: block;
 }
+/* Red: two rollers with a nip between them; the paper comes out of that gap. */
 .r1 {
   top: 5px;
 }
-/* The paper starts at the middle of the slot opening and lies over its lower lip,
-   so it reads as coming out of the hole. */
+.r2 {
+  top: 25px;
+}
+/* The paper starts at --nip inside the slot opening and lies over everything below it,
+   so it reads as coming out of the hole (silver: middle of the slot, red: between the rollers). */
 .fp-silver {
   --slot-h: 34px;
+  --nip: 17px;
 }
 .fp-red {
   --slot-h: 46px;
+  --nip: 21px;
 }
 .paper-mask {
   position: relative;
   z-index: 4;
-  margin-top: calc(var(--slot-h) / -2);
+  margin-top: calc(var(--nip) - var(--slot-h));
   height: calc(var(--ph) + 64px);
   width: 100%;
   overflow: hidden;
@@ -1698,21 +1704,6 @@ img {
   height: 40px;
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.35) 45%, transparent);
   z-index: 2;
-  pointer-events: none;
-  display: block;
-}
-.roller-front {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: calc(var(--ph) * var(--ar) + 30px);
-  max-width: 88%;
-  height: 16px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #55585e, #141416 55%, #2c2e32);
-  box-shadow: 0 3px 4px rgba(0, 0, 0, 0.6);
-  z-index: 3;
   pointer-events: none;
   display: block;
 }
@@ -1748,6 +1739,10 @@ img {
 }
 .paper.released {
   animation: drop 0.6s cubic-bezier(0.35, 0, 0.3, 1.25);
+}
+/* Red: the paper still hangs from the rollers, so it pivots at the slot mouth and stays centred under it. */
+.fp-red .paper {
+  transform-origin: 50% 0;
 }
 .paper.done,
 .paper.taken {

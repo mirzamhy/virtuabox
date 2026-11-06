@@ -83,7 +83,7 @@ export function Print({
   // Landing pose after the drop: silver falls into the recessed bin, red rests in its tray.
   const vars = {
     '--ar': ar,
-    '--tilt': machine === 'silver' ? (portrait ? '-22deg' : '-7deg') : '-4deg',
+    '--tilt': machine === 'silver' ? (portrait ? '-22deg' : '-7deg') : '-1.5deg',
     '--drop': machine === 'silver' ? '34px' : '10px',
     '--ds': machine === 'silver' ? (portrait ? 0.86 : 0.92) : 1,
   } as CSSProperties;
@@ -106,13 +106,17 @@ export function Print({
         {machine === 'red' && <div className="fp-label" aria-hidden="true">PHOTO OUT</div>}
 
         <div className="slot" aria-hidden="true">
-          {machine === 'red' && <i className="roller r1" />}
+          {machine === 'red' && (
+            <>
+              <i className="roller r1" />
+              <i className="roller r2" />
+            </>
+          )}
         </div>
 
         <div className={`paper-mask ${stage === 'printing' ? 'feeding' : ''}`}>
           {machine === 'silver' && <i className="bin" aria-hidden="true" />}
           <i className="mouth-shadow" aria-hidden="true" />
-          {machine === 'red' && <i className="roller-front" aria-hidden="true" />}
           <button
             ref={paperRef}
             className={`paper ${stage}`}
