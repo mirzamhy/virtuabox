@@ -982,6 +982,66 @@ img {
   z-index: 50;
   animation: flash 0.45s ease-out forwards;
 }
+/* ── AR props ── */
+.prop-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  pointer-events: none;
+  opacity: 0;
+}
+.prop-layer.on {
+  opacity: 1;
+}
+.props {
+  position: absolute;
+  left: 2%;
+  top: 12%;
+  bottom: 4%;
+  width: 8.5%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.4%;
+}
+.prop-btn {
+  flex: 0 1 auto;
+  min-height: 0;
+  aspect-ratio: 1;
+  max-height: 13%;
+  padding: 0;
+  border-radius: 22%;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  transition: transform 0.12s, border-color 0.12s, background 0.12s;
+}
+.prop-btn canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.prop-btn:hover:not(:disabled) {
+  transform: scale(1.06);
+}
+.prop-btn.on {
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.26);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+.prop-btn:disabled {
+  opacity: 0.45;
+}
+.hud-chip {
+  background: rgba(0, 0, 0, 0.55);
+  padding: 1px 8px;
+  border-radius: 999px;
+}
 
 /* ───────── monitor (zoomed touchscreen) ───────── */
 .monitor-wrap {
@@ -1702,6 +1762,24 @@ img {
   }
   .controls .ghost {
     min-width: 0;
+  }
+  /* Props become a row along the bottom of the screen so the buttons stay finger-sized. */
+  .props {
+    top: auto;
+    bottom: 3%;
+    left: 2%;
+    right: 16%;
+    width: auto;
+    flex-direction: row;
+    gap: 1.5%;
+  }
+  .prop-btn {
+    max-height: none;
+    flex: 1 1 0;
+    max-width: 34px;
+  }
+  .crop-guide span {
+    display: none;
   }
   .machine-row {
     gap: 10px;

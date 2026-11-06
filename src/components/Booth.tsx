@@ -3,10 +3,14 @@ import type { Settings } from '../types';
 import { capture, startCamera, type Cam } from '../camera';
 import { STYLES, styleCss } from '../filters';
 import { LAYOUTS, cellAspect } from '../layouts';
-
-const SCREEN_AR = 4 / 3; // camera frames are captured at 4:3
 import { beep, shutter, unlockAudio } from '../sound';
 import { wait } from '../motion';
+import { PROPS, drawProp, faceFrom, iconFace, loadTracker, smooth, type Face, type PropId } from '../props';
+
+const SCREEN_AR = 4 / 3; // camera frames are captured at 4:3
+
+// Remembered between booth visits.
+let lastProp: PropId = 'none';
 
 type CamState = 'idle' | 'starting' | 'on' | 'error';
 
@@ -20,6 +24,36 @@ function errorText(e: unknown) {
 
 const inAppBrowser = () => /Instagram|FBAN|FBAV|TikTok|Line\//i.test(navigator.userAgent);
 
+function PropIcon({ id }: { id: PropId }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const c = ref.current;
+    if (!c) return;
+    const S = 64;
+    c.width = S;
+    c.height = S;
+    const g = c.getContext('2d')!;
+    // Hats reach far above the head, so draw a smaller face lower down for them.
+    const tall = id === 'topi' ? 0.6 : id === 'mahkota' || id === 'kucing' ? 0.78 : 1;
+    const f = iconFace(S * tall);
+    g.translate((S - S * tall) / 2, S * (1 - tall) * 0.95 - (tall === 1 ? S * 0.06 : 0));
+    g.fillStyle = 'rgba(255,255,255,0.18)';
+    g.beginPath();
+    g.ellipse(f.mid.x, f.mid.y + f.u * 0.25, f.u * 1.05, f.u * 1.35, 0, 0, Math.PI * 2);
+    g.fill();
+    if (id === 'none') {
+      g.strokeStyle = 'rgba(255,255,255,0.75)';
+      g.lineWidth = 3;
+      g.beginPath();
+      g.moveTo(f.mid.x - f.u, f.mid.y + f.u * 1.2);
+      g.lineTo(f.mid.x + f.u, f.mid.y - f.u * 0.7);
+      g.stroke();
+    }
+    drawProp(g, id, f);
+  }, [id]);
+  return <canvas ref={ref} aria-hidden="true" />;
+}
+
 export function Booth({
   settings,
   onDone,
@@ -30,6 +64,7 @@ export function Booth({
   onBack: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const overlayRef = useRef<HTMLCanvasElement>(null);
   const camRef = useRef<Cam | null>(null);
   const shotsRef = useRef<HTMLCanvasElement[]>([]);
   const alive = useRef(true);
@@ -42,6 +77,11 @@ export function Booth({
   const [flash, setFlash] = useState(0);
   const [busy, setBusy] = useState(false);
   const [auto, setAuto] = useState(true);
+  const [prop, setProp] = useState<PropId>(lastProp);
+  const [propState, setPropState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const propRef = useRef(prop);
+  propRef.current = prop;
+  lastProp = prop;
 
   const start = async (useDemo: boolean) => {
     unlockAudio();
@@ -73,6 +113,51 @@ export function Booth({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // AR props: track faces every frame and draw the chosen prop on the overlay canvas.
+  const propOn = prop !== 'none';
+  useEffect(() => {
+    const cv = overlayRef.current;
+    const clear = () => cv?.getContext('2d')?.clearRect(0, 0, cv.width, cv.height);
+    if (!propOn || cam !== 'on') {
+      clear();
+      return;
+    }
+    let stop = false;
+    let raf = 0;
+    let faces: Face[] = [];
+    setPropState('loading');
+    loadTracker()
+      .then((tracker) => {
+        if (stop) return;
+        setPropState('ready');
+        const loop = () => {
+          if (stop) return;
+          const v = videoRef.current;
+          if (v && cv && v.readyState >= 2 && v.videoWidth) {
+            if (cv.width !== v.videoWidth || cv.height !== v.videoHeight) {
+              cv.width = v.videoWidth;
+              cv.height = v.videoHeight;
+            }
+            const g = cv.getContext('2d')!;
+            const found = tracker.detect(v, performance.now());
+            faces = found.map((lm, i) => smooth(faces[i], faceFrom(lm, cv.width, cv.height)));
+            g.clearRect(0, 0, cv.width, cv.height);
+            for (const f of faces) drawProp(g, propRef.current, f);
+          }
+          raf = requestAnimationFrame(loop);
+        };
+        loop();
+      })
+      .catch(() => {
+        if (!stop) setPropState('error');
+      });
+    return () => {
+      stop = true;
+      cancelAnimationFrame(raf);
+      clear();
+    };
+  }, [propOn, cam]);
+
   const takeOne = async () => {
     for (let s: number = settings.timer; s >= 1; s--) {
       if (!alive.current) return;
@@ -85,7 +170,7 @@ export function Booth({
     if (!v || !alive.current) return;
     shutter();
     setFlash((f) => f + 1);
-    const c = capture(v);
+    const c = capture(v, propOn ? overlayRef.current : null);
     shotsRef.current = [...shotsRef.current, c];
     setThumbs((t) => [...t, c.toDataURL('image/jpeg', 0.6)]);
     await wait(700);
@@ -147,6 +232,12 @@ export function Booth({
                 className={cam === 'on' ? 'on' : ''}
                 style={{ filter: styleCss(settings.style) }}
               />
+              <canvas
+                ref={overlayRef}
+                className={`prop-layer ${cam === 'on' ? 'on' : ''}`}
+                style={{ filter: styleCss(settings.style) }}
+                aria-hidden="true"
+              />
 
               {cam === 'on' && showGuide && (
                 <div className="crop-guide" style={guide} aria-hidden="true">
@@ -204,15 +295,39 @@ export function Booth({
                 </div>
               )}
 
+
               {cam === 'on' && (
                 <div className="hud">
                   <span>
                     Take {Math.min(taken + (busy ? 1 : 0), settings.takes)}/{settings.takes}
                   </span>
+                  {propOn && propState === 'loading' && <span className="hud-chip">Memuat props…</span>}
+                  {propOn && propState === 'error' && (
+                    <span className="hud-chip">Props gagal dimuat, cek internet</span>
+                  )}
                   <span>
                     {styleLabel}
                     {demo ? ' · demo' : ''}
                   </span>
+                </div>
+              )}
+
+              {cam === 'on' && (
+                <div className="props" role="radiogroup" aria-label="Props">
+                  {PROPS.map((p) => (
+                    <button
+                      key={p.id}
+                      role="radio"
+                      aria-checked={prop === p.id}
+                      aria-label={p.label}
+                      title={p.label}
+                      className={`prop-btn ${prop === p.id ? 'on' : ''}`}
+                      disabled={busy}
+                      onClick={() => setProp(p.id)}
+                    >
+                      <PropIcon id={p.id} />
+                    </button>
+                  ))}
                 </div>
               )}
 
