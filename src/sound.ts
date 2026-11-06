@@ -1,4 +1,4 @@
-// All sounds are synthesized with Web Audio, so there are no audio files to load.
+// Short UI sounds are synthesized with Web Audio; shutter and printer are recorded files.
 let ctx: AudioContext | null = null;
 let muted = false;
 
@@ -42,6 +42,63 @@ export function beep(freq = 880, dur = 0.12, vol = 0.16) {
   o.connect(g).connect(a.destination);
   o.start(t);
   o.stop(t + dur + 0.02);
+}
+
+/** Filtered noise burst: curtain rings sliding on the rail. */
+export function curtain(dur = 0.75) {
+  const a = ac();
+  if (!a) return;
+  const n = Math.floor(a.sampleRate * dur);
+  const buf = a.createBuffer(1, n, a.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) {
+    // ring clatter: noise with fast random flutter
+    const flutter = 0.55 + 0.45 * Math.sin(i / 90 + Math.sin(i / 1700) * 6);
+    d[i] = (Math.random() * 2 - 1) * flutter;
+  }
+  const src = a.createBufferSource();
+  src.buffer = buf;
+  const bp = a.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.Q.value = 0.9;
+  const t = a.currentTime;
+  bp.frequency.setValueAtTime(1800, t);
+  bp.frequency.linearRampToValueAtTime(3600, t + dur);
+  const g = a.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.22, t + 0.08);
+  g.gain.setValueAtTime(0.22, t + dur * 0.6);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(bp).connect(g).connect(a.destination);
+  src.start(t);
+}
+
+/** Light switch click with a faint lamp hum. */
+export function lightClick() {
+  const a = ac();
+  if (!a) return;
+  const t = a.currentTime;
+  const n = Math.floor(a.sampleRate * 0.03);
+  const buf = a.createBuffer(1, n, a.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 4);
+  const src = a.createBufferSource();
+  src.buffer = buf;
+  const g = a.createGain();
+  g.gain.value = 0.5;
+  src.connect(g).connect(a.destination);
+  src.start(t);
+
+  const o = a.createOscillator();
+  const h = a.createGain();
+  o.type = 'sawtooth';
+  o.frequency.value = 100;
+  h.gain.setValueAtTime(0.0001, t);
+  h.gain.exponentialRampToValueAtTime(0.02, t + 0.05);
+  h.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+  o.connect(h).connect(a.destination);
+  o.start(t);
+  o.stop(t + 0.55);
 }
 
 // ── recorded SFX (public/sfx) ──

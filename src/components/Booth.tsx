@@ -3,8 +3,8 @@ import type { Settings } from '../types';
 import { capture, startCamera, type Cam } from '../camera';
 import { STYLES, styleCss } from '../filters';
 import { LAYOUTS, cellAspect } from '../layouts';
-import { beep, shutter, unlockAudio } from '../sound';
-import { wait } from '../motion';
+import { beep, curtain, lightClick, shutter, unlockAudio } from '../sound';
+import { reducedMotion, wait } from '../motion';
 import { PROPS, drawProp, faceFrom, iconFace, loadTracker, smooth, type Face, type PropId } from '../props';
 
 const SCREEN_AR = 4 / 3; // camera frames are captured at 4:3
@@ -105,9 +105,16 @@ export function Booth({
 
   useEffect(() => {
     alive.current = true;
+    // Entering: the curtain slides shut, then the lights click on (.intro in styles.css).
+    const timers: number[] = [];
+    if (!reducedMotion()) {
+      curtain();
+      timers.push(window.setTimeout(lightClick, 1000));
+    }
     if (new URLSearchParams(location.search).has('demo')) void start(true);
     return () => {
       alive.current = false;
+      timers.forEach(clearTimeout);
       camRef.current?.stop();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -207,7 +214,7 @@ export function Booth({
 
   return (
     <main className="booth-wrap">
-      <div className="room">
+      <div className={`room ${reducedMotion() ? '' : 'intro'}`}>
         <div className="wall w-top">
           <i className="softbox" />
         </div>
@@ -366,6 +373,10 @@ export function Booth({
             {auto ? 'Beruntun' : 'Manual'}
           </button>
         </div>
+
+        <i className="curtain c-l" aria-hidden="true" />
+        <i className="curtain c-r" aria-hidden="true" />
+        <i className="room-dark" aria-hidden="true" />
       </div>
       {flash > 0 && <div className="flash" key={flash} aria-hidden="true" />}
     </main>

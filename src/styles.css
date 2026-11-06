@@ -30,6 +30,8 @@
   --accent-ink: #f4f5f6;
   --trim: #b6bbc1;
   --led: #ffffff;
+  --curtain: #2b2e33;
+  --curtain-hi: #474b52;
   --brushed: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.4) 0 1px, rgba(0, 0, 0, 0.025) 1px 3px),
     linear-gradient(180deg, #eef0f2, #cdd1d6);
 }
@@ -54,6 +56,8 @@
   --accent-ink: #5c1519;
   --trim: #c9cdd2;
   --led: #fff6ea;
+  --curtain: #1f0507;
+  --curtain-hi: #4a0f14;
   --brushed: linear-gradient(180deg, #84252b, #6a1a1f);
 }
 
@@ -1043,6 +1047,59 @@ img {
   border-radius: 999px;
 }
 
+/* ── entering the booth: curtain slides shut, room goes dark, lights click on ── */
+.curtain {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 7%;
+  pointer-events: none;
+  z-index: 3;
+  background:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.38) 0 3px, transparent 3px 9px, rgba(255, 255, 255, 0.07) 9px 12px, transparent 12px 18px),
+    linear-gradient(90deg, var(--curtain), var(--curtain-hi) 50%, var(--curtain));
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.5);
+}
+.curtain::before {
+  /* rail */
+  content: '';
+  position: absolute;
+  left: -20%;
+  right: -20%;
+  top: 0;
+  height: 1.4%;
+  background: linear-gradient(180deg, var(--chrome-hi), var(--chrome-lo));
+}
+.c-l {
+  left: 0;
+  border-radius: 0 0 40% 0 / 0 0 6% 0;
+}
+.c-r {
+  right: 0;
+  border-radius: 0 0 0 40% / 0 0 0 6%;
+}
+.room-dark {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+.room.intro .c-l {
+  animation: curtain-l 0.75s cubic-bezier(0.3, 0.9, 0.3, 1.05) both;
+}
+.room.intro .c-r {
+  animation: curtain-r 0.75s cubic-bezier(0.3, 0.9, 0.3, 1.05) both;
+}
+.room.intro .room-dark {
+  animation: lights 1.5s linear both;
+}
+.room.intro .softbox,
+.room.intro .led {
+  animation: lamp-on 1.5s linear both;
+}
+
 /* ───────── monitor (zoomed touchscreen) ───────── */
 .monitor-wrap {
   flex: 1;
@@ -1592,6 +1649,68 @@ img {
 }
 
 /* ───────── keyframes ───────── */
+/* The curtain slides in from wider than the room (fully open) to its rest at the edges. */
+@keyframes curtain-l {
+  from {
+    width: 50%;
+    transform: translateX(-100%);
+  }
+  60% {
+    width: 50%;
+    transform: translateX(0);
+  }
+}
+@keyframes curtain-r {
+  from {
+    width: 50%;
+    transform: translateX(100%);
+  }
+  60% {
+    width: 50%;
+    transform: translateX(0);
+  }
+}
+/* 0–0.7 s light blocked by the curtain, 1.0 s click, flicker, on. */
+@keyframes lights {
+  0% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.55;
+  }
+  66% {
+    opacity: 0.72;
+  }
+  70% {
+    opacity: 0.15;
+  }
+  74% {
+    opacity: 0.5;
+  }
+  80% {
+    opacity: 0.05;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes lamp-on {
+  0%,
+  66% {
+    filter: brightness(0.35);
+    box-shadow: none;
+  }
+  70% {
+    filter: brightness(1.2);
+  }
+  74% {
+    filter: brightness(0.5);
+  }
+  80%,
+  100% {
+    filter: none;
+  }
+}
 @keyframes rise {
   from {
     transform: translateY(24px);
