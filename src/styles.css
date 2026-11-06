@@ -950,6 +950,16 @@ img {
   min-height: 38px;
   font-size: 0.85rem;
 }
+.control-side {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.control-side .ghost {
+  min-height: 32px;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.78rem;
+}
 .shutter {
   width: clamp(52px, 8vw, 76px);
   aspect-ratio: 1;
@@ -979,14 +989,29 @@ img {
 .shutter:disabled {
   opacity: 0.55;
 }
+/* Screen flash: holds pure white while the frame is grabbed, then fades. */
 .flash {
   position: fixed;
   inset: 0;
   background: #fff;
   pointer-events: none;
   z-index: 50;
+}
+.flash.on {
+  opacity: 1;
+}
+.flash.fade {
   animation: flash 0.45s ease-out forwards;
 }
+/* Flash off: a quick shutter blink on the screen only. */
+.blink {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  pointer-events: none;
+  animation: flash 0.25s ease-out forwards;
+}
+
 /* ── AR props ── */
 .prop-layer {
   position: absolute;
@@ -1068,15 +1093,24 @@ img {
 .led-ring.run circle:not(.ring-plate) {
   animation: led-on 0.18s ease-out forwards;
 }
+.back.fire .led-ring circle:not(.ring-plate) {
+  fill: #fff;
+  filter: drop-shadow(0 0 3px #fff);
+}
 .lens-ring .lens-label {
   left: calc(134% + 1.4cqw);
 }
-/* LED bars: brighter on the last second. */
+/* LED bars: brighter on the last second, blazing at the shot. */
 .led {
   transition: box-shadow 0.3s, filter 0.3s;
 }
 .back.hot .led {
   box-shadow: 0 0 34px 14px color-mix(in srgb, var(--led) 80%, transparent);
+}
+.back.fire .led {
+  box-shadow: 0 0 60px 30px #fff;
+  filter: brightness(1.4);
+  transition: none;
 }
 
 /* ── entering the booth: curtain slides shut, room goes dark, lights click on ── */

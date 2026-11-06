@@ -12,8 +12,10 @@ const RING_DOTS = 16;
 
 // Remembered between booth visits.
 let lastProp: PropId = 'none';
+let lastFlash = true;
 
 type CamState = 'idle' | 'starting' | 'on' | 'error';
+type Flash = 'off' | 'on' | 'fade' | 'blink';
 
 function errorText(e: unknown) {
   const name = (e as { name?: string })?.name;
@@ -76,14 +78,16 @@ export function Booth({
   const [thumbs, setThumbs] = useState<string[]>([]);
   const [count, setCount] = useState<number | null>(null);
   const [ring, setRing] = useState(0); // bumps each countdown so the LED ring restarts
-  const [flash, setFlash] = useState(0);
+  const [flash, setFlash] = useState<Flash>('off');
   const [busy, setBusy] = useState(false);
   const [auto, setAuto] = useState(true);
+  const [useFlash, setUseFlash] = useState(lastFlash);
   const [prop, setProp] = useState<PropId>(lastProp);
   const [propState, setPropState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const propRef = useRef(prop);
   propRef.current = prop;
   lastProp = prop;
+  lastFlash = useFlash;
 
   const start = async (useDemo: boolean) => {
     unlockAudio();
@@ -179,9 +183,16 @@ export function Booth({
     const v = videoRef.current;
     if (!v || !alive.current) return;
     shutter();
-    setFlash((f) => f + 1);
+    if (useFlash) {
+      // The white screen lights the face; give the camera a moment to see it before grabbing.
+      setFlash('on');
+      await wait(220);
+    } else {
+      setFlash('blink');
+    }
     const c = capture(v, propOn ? overlayRef.current : null);
     shotsRef.current = [...shotsRef.current, c];
+    if (useFlash) setFlash('fade');
     setThumbs((t) => [...t, c.toDataURL('image/jpeg', 0.6)]);
     await wait(700);
   };
@@ -225,7 +236,7 @@ export function Booth({
         <div className="wall w-right" />
         <div className="wall w-floor" />
 
-        <div className={`back ${count === 1 ? 'hot' : ''}`}>
+        <div className={`back ${count === 1 ? 'hot' : ''} ${flash === 'on' ? 'fire' : ''}`}>
           <i className="led led-l" />
           <i className="led led-r" />
           <div className="lens-ring" aria-hidden="true">
@@ -325,6 +336,7 @@ export function Booth({
                 </div>
               )}
 
+              {flash === 'blink' && <i className="blink" onAnimationEnd={() => setFlash('off')} />}
 
               {cam === 'on' && (
                 <div className="hud">
@@ -387,21 +399,34 @@ export function Booth({
               <circle cx="12" cy="12" r="3.6" />
             </svg>
           </button>
-          <button
-            className="ghost mode"
-            onClick={() => setAuto((a) => !a)}
-            disabled={busy}
-            aria-pressed={auto}
-          >
-            {auto ? 'Beruntun' : 'Manual'}
-          </button>
+          <div className="control-side">
+            <button
+              className="ghost mode"
+              onClick={() => setAuto((a) => !a)}
+              disabled={busy}
+              aria-pressed={auto}
+            >
+              {auto ? 'Beruntun' : 'Manual'}
+            </button>
+            <button
+              className="ghost mode"
+              onClick={() => setUseFlash((f) => !f)}
+              disabled={busy}
+              aria-pressed={useFlash}
+              title="Layar jadi putih terang saat jepret, menerangi wajah"
+            >
+              {useFlash ? 'Flash nyala' : 'Flash mati'}
+            </button>
+          </div>
         </div>
 
         <i className="curtain c-l" aria-hidden="true" />
         <i className="curtain c-r" aria-hidden="true" />
         <i className="room-dark" aria-hidden="true" />
       </div>
-      {flash > 0 && <div className="flash" key={flash} aria-hidden="true" />}
+      {(flash === 'on' || flash === 'fade') && (
+        <div className={`flash ${flash}`} aria-hidden="true" onAnimationEnd={() => setFlash('off')} />
+      )}
     </main>
   );
 }
