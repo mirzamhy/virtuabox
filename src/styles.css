@@ -690,7 +690,7 @@ img {
   padding: 0 16px 24px;
 }
 .room {
-  --rw: min(100%, 1040px, calc((100dvh - 110px) * 4 / 3));
+  --rw: min(100%, 1400px, calc((100dvh - 100px) * 4 / 3));
   width: var(--rw);
   aspect-ratio: 4 / 3;
   position: relative;
@@ -706,26 +706,26 @@ img {
 }
 .w-top {
   background: linear-gradient(180deg, color-mix(in srgb, var(--wall-top) 85%, #000), var(--wall-top));
-  clip-path: polygon(0 0, 100% 0, 88% 16%, 12% 16%);
+  clip-path: polygon(0 0, 100% 0, 91% 9%, 9% 9%);
 }
 .w-left {
   background: linear-gradient(90deg, color-mix(in srgb, var(--wall-side) 80%, #000), var(--wall-side));
-  clip-path: polygon(0 0, 12% 16%, 12% 84%, 0 100%);
+  clip-path: polygon(0 0, 9% 9%, 9% 86%, 0 100%);
 }
 .w-right {
   background: linear-gradient(270deg, color-mix(in srgb, var(--wall-side) 80%, #000), var(--wall-side));
-  clip-path: polygon(100% 0, 100% 100%, 88% 84%, 88% 16%);
+  clip-path: polygon(100% 0, 100% 100%, 91% 86%, 91% 9%);
 }
 .w-floor {
   background: linear-gradient(0deg, color-mix(in srgb, var(--floor) 80%, #000), var(--floor));
-  clip-path: polygon(12% 84%, 88% 84%, 100% 100%, 0 100%);
+  clip-path: polygon(9% 86%, 91% 86%, 100% 100%, 0 100%);
 }
 .softbox {
   position: absolute;
   left: 30%;
   right: 30%;
-  top: 3%;
-  height: 7.5%;
+  top: 2%;
+  height: 5%;
   border-radius: 999px;
   background: radial-gradient(120% 140% at 50% 30%, #fff 40%, #eceef0 100%);
   box-shadow: 0 0 40px 12px rgba(255, 255, 255, 0.55);
@@ -733,38 +733,38 @@ img {
 }
 .back {
   position: absolute;
-  left: 12%;
-  right: 12%;
-  top: 16%;
-  bottom: 16%;
+  left: 9%;
+  right: 9%;
+  top: 9%;
+  bottom: 14%;
   background: radial-gradient(90% 70% at 50% 45%, color-mix(in srgb, var(--wall-back) 92%, #fff), var(--wall-back));
   container-type: size;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4cqh;
+  gap: 3cqh;
 }
 .led {
   position: absolute;
   top: 18%;
   bottom: 18%;
-  width: 3.2cqw;
+  width: 2.4cqw;
   border-radius: 999px;
   background: var(--led);
   box-shadow: 0 0 24px 8px color-mix(in srgb, var(--led) 60%, transparent);
   display: block;
 }
 .led-l {
-  left: 3.5cqw;
+  left: 2cqw;
 }
 .led-r {
-  right: 3.5cqw;
+  right: 2cqw;
 }
 .lens-ring {
   position: relative;
-  width: 11cqh;
-  height: 11cqh;
+  width: 8cqh;
+  height: 8cqh;
   border-radius: 50%;
   background: #17191c;
   display: grid;
@@ -794,10 +794,10 @@ img {
   opacity: 0.7;
 }
 .screen-bezel {
-  width: min(78cqw, 70cqh * 4 / 3);
+  width: min(86cqw, 86cqh * 4 / 3);
   aspect-ratio: 4 / 3;
   background: var(--bezel);
-  padding: 1.6cqh;
+  padding: 1.2cqh;
   border-radius: 1.6cqh;
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
   flex: none;
@@ -934,10 +934,10 @@ img {
 }
 .controls {
   position: absolute;
-  left: 12%;
-  right: 12%;
+  left: 9%;
+  right: 9%;
   bottom: 0;
-  height: 16%;
+  height: 14%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2039,46 +2039,52 @@ img {
   .pick-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+  .booth-wrap {
+    padding: 0 8px 16px;
+  }
   .room {
     --rw: min(100%, calc((100dvh - 110px) * 3 / 4));
     aspect-ratio: 3 / 4;
   }
   .w-top {
-    clip-path: polygon(0 0, 100% 0, 92% 12%, 8% 12%);
+    clip-path: polygon(0 0, 100% 0, 96% 10%, 4% 10%);
   }
   .w-left {
-    clip-path: polygon(0 0, 8% 12%, 8% 82%, 0 100%);
+    clip-path: polygon(0 0, 4% 10%, 4% 82%, 0 100%);
   }
   .w-right {
-    clip-path: polygon(100% 0, 100% 100%, 92% 82%, 92% 12%);
+    clip-path: polygon(100% 0, 100% 100%, 96% 82%, 96% 10%);
   }
   .w-floor {
-    clip-path: polygon(8% 82%, 92% 82%, 100% 100%, 0 100%);
+    clip-path: polygon(4% 82%, 96% 82%, 100% 100%, 0 100%);
   }
   .softbox {
     top: 2.5%;
-    height: 5.5%;
+    height: 4.5%;
     left: 24%;
     right: 24%;
   }
   .back {
-    left: 8%;
-    right: 8%;
-    top: 12%;
+    left: 4%;
+    right: 4%;
+    top: 10%;
     bottom: 18%;
   }
   .screen-bezel {
-    width: 88cqw;
+    width: 94cqw;
   }
   .led {
-    width: 2.4cqw;
+    width: 1.8cqw;
     top: 8%;
     bottom: 8%;
-    left: 1.2cqw;
+    left: 0.6cqw;
   }
   .led-r {
     left: auto;
-    right: 1.2cqw;
+    right: 0.6cqw;
+  }
+  .curtain {
+    width: 3.5%;
   }
   .controls {
     left: 4%;
