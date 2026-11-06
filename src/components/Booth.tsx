@@ -9,6 +9,7 @@ import { PROPS, drawProp, faceFrom, iconFace, loadTracker, smooth, type Face, ty
 
 const SCREEN_AR = 4 / 3; // camera frames are captured at 4:3
 const RING_DOTS = 16;
+const CHEERS = ['Bagus!', 'Mantap!', 'Cakep!', 'Gaya!', 'Keren!'];
 
 // Remembered between booth visits.
 let lastProp: PropId = 'none';
@@ -68,6 +69,8 @@ export function Booth({
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
+  const freezeRef = useRef<HTMLDivElement>(null);
+  const thumbRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const camRef = useRef<Cam | null>(null);
   const shotsRef = useRef<HTMLCanvasElement[]>([]);
   const alive = useRef(true);
@@ -79,6 +82,7 @@ export function Booth({
   const [count, setCount] = useState<number | null>(null);
   const [ring, setRing] = useState(0); // bumps each countdown so the LED ring restarts
   const [flash, setFlash] = useState<Flash>('off');
+  const [freeze, setFreeze] = useState<{ url: string; cheer: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [auto, setAuto] = useState(true);
   const [useFlash, setUseFlash] = useState(lastFlash);
@@ -171,7 +175,26 @@ export function Booth({
     };
   }, [propOn, cam]);
 
-  const takeOne = async () => {
+  /** Shrink the frozen photo into its thumbnail slot. */
+  const flyTo = async (slot: number) => {
+    const el = freezeRef.current;
+    const to = thumbRefs.current[slot];
+    if (!el || !to || reducedMotion()) return;
+    const a = el.getBoundingClientRect();
+    const b = to.getBoundingClientRect();
+    const k = b.width / a.width;
+    const dx = b.left - a.left;
+    const dy = b.top + b.height / 2 - (a.top + (a.height * k) / 2);
+    await el
+      .animate([{ transform: 'none' }, { transform: `translate(${dx}px, ${dy}px) scale(${k})`, opacity: 0.85 }], {
+        duration: 480,
+        easing: 'cubic-bezier(0.55, 0, 0.2, 1)',
+        fill: 'forwards',
+      })
+      .finished.catch(() => {});
+  };
+
+  const takeOne = async (slot: number) => {
     setRing((r) => r + 1);
     for (let s: number = settings.timer; s >= 1; s--) {
       if (!alive.current) return;
@@ -191,19 +214,31 @@ export function Booth({
       setFlash('blink');
     }
     const c = capture(v, propOn ? overlayRef.current : null);
-    shotsRef.current = [...shotsRef.current, c];
+    const next = [...shotsRef.current];
+    next[slot] = c;
+    shotsRef.current = next;
     if (useFlash) setFlash('fade');
-    setThumbs((t) => [...t, c.toDataURL('image/jpeg', 0.6)]);
-    await wait(700);
+    const url = c.toDataURL('image/jpeg', 0.7);
+    setFreeze({ url, cheer: CHEERS[Math.floor(Math.random() * CHEERS.length)] });
+    await wait(reducedMotion() ? 400 : 750);
+    if (!alive.current) return;
+    await flyTo(slot);
+    setThumbs((t) => {
+      const n = [...t];
+      n[slot] = url;
+      return n;
+    });
+    setFreeze(null);
+    await wait(250);
   };
 
   const shoot = async () => {
     if (busy || cam !== 'on') return;
     setBusy(true);
     if (auto) {
-      while (shotsRef.current.length < settings.takes && alive.current) await takeOne();
+      while (shotsRef.current.length < settings.takes && alive.current) await takeOne(shotsRef.current.length);
     } else {
-      await takeOne();
+      await takeOne(shotsRef.current.length);
     }
     if (!alive.current) return;
     setBusy(false);
@@ -336,6 +371,12 @@ export function Booth({
                 </div>
               )}
 
+              {freeze && (
+                <div className="freeze" ref={freezeRef}>
+                  <img src={freeze.url} alt="" style={{ filter: styleCss(settings.style) }} />
+                  <span className="cheer">{freeze.cheer}</span>
+                </div>
+              )}
               {flash === 'blink' && <i className="blink" onAnimationEnd={() => setFlash('off')} />}
 
               {cam === 'on' && (
@@ -375,7 +416,13 @@ export function Booth({
 
               <div className="thumbs" aria-label="Hasil sementara">
                 {Array.from({ length: settings.takes }, (_, i) => (
-                  <span key={i} className="thumb">
+                  <span
+                    key={i}
+                    ref={(el) => {
+                      thumbRefs.current[i] = el;
+                    }}
+                    className="thumb"
+                  >
                     {thumbs[i] && <img src={thumbs[i]} alt={`Take ${i + 1}`} />}
                   </span>
                 ))}
