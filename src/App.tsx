@@ -19,6 +19,8 @@ export default function App() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [shots, setShots] = useState<HTMLCanvasElement[]>([]);
   const [picked, setPicked] = useState<HTMLCanvasElement[]>([]);
+  const [sel, setSel] = useState<number[]>([]);
+  const [retakeAt, setRetakeAt] = useState<number | null>(null);
   const [edit, setEdit] = useState<EditState>({
     adjust: [],
     frameColor: frameFor('silver'),
@@ -43,6 +45,8 @@ export default function App() {
   const resetSession = () => {
     setShots([]);
     setPicked([]);
+    setSel([]);
+    setRetakeAt(null);
     setStrip('');
   };
 
@@ -87,10 +91,17 @@ export default function App() {
 
       {phase === 'booth' && (
         <Booth
+          key={retakeAt ?? 'all'}
           settings={settings}
-          onBack={() => setPhase('options')}
+          retake={retakeAt === null ? undefined : { index: retakeAt, shots }}
+          onBack={() => {
+            if (retakeAt === null) return setPhase('options');
+            setRetakeAt(null);
+            setPhase('pick');
+          }}
           onDone={(s) => {
             setShots(s);
+            setRetakeAt(null);
             setPhase('pick');
           }}
         />
@@ -101,8 +112,14 @@ export default function App() {
           shots={shots}
           need={layout.slots}
           style={settings.style}
+          sel={sel}
+          setSel={setSel}
           onRetake={() => {
             resetSession();
+            setPhase('booth');
+          }}
+          onRetakeOne={(i) => {
+            setRetakeAt(i);
             setPhase('booth');
           }}
           onNext={(idx) => {

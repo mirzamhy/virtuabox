@@ -11,7 +11,8 @@ const SCREEN_AR = 4 / 3; // camera frames are captured at 4:3
 const RING_DOTS = 16;
 const CHEERS = ['Bagus!', 'Mantap!', 'Cakep!', 'Gaya!', 'Keren!'];
 
-// Remembered between booth visits.
+// Remembered between booth visits (e.g. when retaking one photo).
+let lastDemo = new URLSearchParams(location.search).has('demo');
 let lastProp: PropId = 'none';
 let lastFlash = true;
 
@@ -62,23 +63,28 @@ export function Booth({
   settings,
   onDone,
   onBack,
+  retake,
 }: {
   settings: Settings;
   onDone: (shots: HTMLCanvasElement[]) => void;
   onBack: () => void;
+  /** Retake mode: shoot one photo again and put it back at `index`. */
+  retake?: { index: number; shots: HTMLCanvasElement[] };
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const freezeRef = useRef<HTMLDivElement>(null);
   const thumbRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const camRef = useRef<Cam | null>(null);
-  const shotsRef = useRef<HTMLCanvasElement[]>([]);
+  const shotsRef = useRef<HTMLCanvasElement[]>(retake ? [...retake.shots] : []);
   const alive = useRef(true);
 
   const [cam, setCam] = useState<CamState>('idle');
   const [err, setErr] = useState('');
   const [demo, setDemo] = useState(false);
-  const [thumbs, setThumbs] = useState<string[]>([]);
+  const [thumbs, setThumbs] = useState<string[]>(() =>
+    retake ? retake.shots.map((c, i) => (i === retake.index ? '' : c.toDataURL('image/jpeg', 0.5))) : [],
+  );
   const [count, setCount] = useState<number | null>(null);
   const [ring, setRing] = useState(0); // bumps each countdown so the LED ring restarts
   const [flash, setFlash] = useState<Flash>('off');
@@ -103,6 +109,7 @@ export function Booth({
       camRef.current?.stop();
       camRef.current = c;
       setDemo(c.demo);
+      lastDemo = c.demo;
       const v = videoRef.current!;
       v.srcObject = c.stream;
       await v.play().catch(() => {});
@@ -121,7 +128,8 @@ export function Booth({
       curtain();
       timers.push(window.setTimeout(lightClick, 1000));
     }
-    if (new URLSearchParams(location.search).has('demo')) void start(true);
+    // Retakes come straight back to a camera that was already allowed.
+    if (lastDemo || retake) void start(lastDemo);
     return () => {
       alive.current = false;
       timers.forEach(clearTimeout);
@@ -235,22 +243,24 @@ export function Booth({
   const shoot = async () => {
     if (busy || cam !== 'on') return;
     setBusy(true);
-    if (auto) {
+    if (retake) {
+      await takeOne(retake.index);
+    } else if (auto) {
       while (shotsRef.current.length < settings.takes && alive.current) await takeOne(shotsRef.current.length);
     } else {
       await takeOne(shotsRef.current.length);
     }
     if (!alive.current) return;
     setBusy(false);
-    if (shotsRef.current.length >= settings.takes) {
-      await wait(600);
+    if (retake || shotsRef.current.length >= settings.takes) {
+      await wait(retake ? 350 : 600);
       if (!alive.current) return;
       camRef.current?.stop();
       onDone(shotsRef.current);
     }
   };
 
-  const taken = thumbs.length;
+  const taken = thumbs.filter(Boolean).length;
   const styleLabel = STYLES.find((s) => s.id === settings.style)?.label;
 
   // Box showing the part of the frame that lands in the template's photo cell.
@@ -382,7 +392,9 @@ export function Booth({
               {cam === 'on' && (
                 <div className="hud">
                   <span>
-                    Take {Math.min(taken + (busy ? 1 : 0), settings.takes)}/{settings.takes}
+                    {retake
+                      ? `Ulang foto ${retake.index + 1}`
+                      : `Take ${Math.min(taken + (busy ? 1 : 0), settings.takes)}/${settings.takes}`}
                   </span>
                   {propOn && propState === 'loading' && <span className="hud-chip">Memuat props…</span>}
                   {propOn && propState === 'error' && (
@@ -421,7 +433,7 @@ export function Booth({
                     ref={(el) => {
                       thumbRefs.current[i] = el;
                     }}
-                    className="thumb"
+                    className={`thumb ${retake?.index === i ? 'target' : ''}`}
                   >
                     {thumbs[i] && <img src={thumbs[i]} alt={`Take ${i + 1}`} />}
                   </span>
@@ -447,14 +459,16 @@ export function Booth({
             </svg>
           </button>
           <div className="control-side">
-            <button
-              className="ghost mode"
-              onClick={() => setAuto((a) => !a)}
-              disabled={busy}
-              aria-pressed={auto}
-            >
-              {auto ? 'Beruntun' : 'Manual'}
-            </button>
+            {!retake && (
+              <button
+                className="ghost mode"
+                onClick={() => setAuto((a) => !a)}
+                disabled={busy}
+                aria-pressed={auto}
+              >
+                {auto ? 'Beruntun' : 'Manual'}
+              </button>
+            )}
             <button
               className="ghost mode"
               onClick={() => setUseFlash((f) => !f)}

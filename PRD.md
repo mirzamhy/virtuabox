@@ -191,3 +191,13 @@ Masalah: kamera memotret 4:3 (melebar), sedangkan kotak foto di template tegak l
 - Foto diambil di resolusi penuh kamera (4:3, maks 1920 px lebar), tidak lagi 960×720.
 - Tombol **Unduh foto asli** di layar Pilih foto dan **Foto asli (N) .zip** di layar akhir: semua take mentah (tanpa filter, tanpa bingkai, tanpa crop template) dalam satu ZIP, plus `strip.png` kalau dari layar akhir. Nama: `virtua-box-YYYYMMDD-HHMM-foto-asli.zip`.
 - ZIP dibuat di browser (`src/zip.ts`, tanpa library, tanpa server).
+
+**6 Nov 2026 — v0.7: gimmick booth saat foto**
+- **Masuk booth:** tirai (kain abu gelap di Silver, merah tua di Red) bergeser menutup dengan bunyi rel, ruangan meredup, lalu lampu softbox + LED menyala dengan klik dan kedip sebentar (±1,5 dtk). Tirai tetap di sisi kabin.
+- **Cincin LED lensa:** 16 titik di sekeliling kamera menyala satu per satu mengikuti hitung mundur, semua menyala putih saat jepret. LED samping lebih terang di detik terakhir dan menyala penuh saat flash.
+- **Flash layar:** layar jadi putih penuh ±220 ms sebelum frame diambil, jadi wajah ikut tersinari (berguna di ruangan gelap). Bisa dimatikan (tombol "Flash nyala/mati"); kalau mati, hanya kedip kecil di layar.
+- **Foto beku:** hasil jepretan diam di layar ±0,75 dtk dengan tulisan acak (Bagus!/Mantap!/Cakep!/Gaya!/Keren!), lalu mengecil dan terbang ke slot thumbnail.
+- **Props AR:** 6 props (kacamata, kacamata hati, mahkota, telinga kucing, kumis, topi pesta) menempel ke wajah, sampai 4 wajah sekaligus. Deteksi wajah MediaPipe Face Landmarker di perangkat (`src/props.ts`); kode, wasm (jsDelivr) dan model (Google) baru diunduh saat props pertama dipilih, butuh internet sekali. Video tidak dikirim ke mana pun. Props ikut tercetak di foto dan di foto asli ZIP. Di HP, pilihan props jadi baris di bawah layar.
+- **Ulang per foto:** di layar Pilih, ketuk foto untuk lihat besar (panah kiri/kanan untuk pindah), lalu pilih "Pilih foto ini" atau "Ulangi foto ini". Ulangi = kembali ke booth (kamera langsung menyala), satu hitung mundur, foto lama diganti di posisi yang sama, pilihan lain tetap. Tombol bulat di pojok foto untuk pilih cepat tanpa membuka.
+- Kamera demo sekarang menampilkan dua orang kartun berwajah, supaya props bisa dites tanpa webcam.
+- Ditunda: live photo / GIF per take.
