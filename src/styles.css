@@ -817,7 +817,9 @@ img {
   object-fit: cover;
   transform: scaleX(-1);
   opacity: 0;
-  transition: opacity 0.4s;
+  transition:
+    opacity 0.4s,
+    filter 0.25s ease;
   display: block;
 }
 .screen video.on {
@@ -1023,6 +1025,7 @@ img {
   transform: scaleX(-1);
   pointer-events: none;
   opacity: 0;
+  transition: filter 0.25s ease;
 }
 .prop-layer.on {
   opacity: 1;
@@ -1817,6 +1820,33 @@ img {
   animation: lift 0.6s cubic-bezier(0.2, 0.9, 0.2, 1.1);
   transform: rotate(-2deg);
 }
+.egg-tag {
+  position: absolute;
+  left: 50%;
+  bottom: 12%;
+  transform: translateX(-50%) rotate(-3deg);
+  z-index: 6;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(15, 15, 18, 0.72);
+  color: #fff;
+  font: 600 0.85rem/1.2 ui-monospace, monospace;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: egg-pop 0.35s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+@keyframes egg-pop {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) rotate(-3deg) scale(0.6);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .egg-tag {
+    animation: none;
+  }
+}
 .taken-main {
   display: flex;
   align-items: center;
@@ -1918,7 +1948,7 @@ img {
   }
 }
 /* The curtain starts closed (two halves meeting in the middle), holds, then opens and
-   gathers at the edges. Timing matches Booth.tsx (sound at 0.35 s). */
+   gathers at the edges. The light click in Booth.tsx (1.85 s) follows this timing. */
 @keyframes curtain-l {
   0%,
   20% {

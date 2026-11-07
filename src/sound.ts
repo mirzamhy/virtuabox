@@ -44,35 +44,6 @@ export function beep(freq = 880, dur = 0.12, vol = 0.16) {
   o.stop(t + dur + 0.02);
 }
 
-/** Filtered noise burst: curtain rings sliding on the rail. */
-export function curtain(dur = 0.75) {
-  const a = ac();
-  if (!a) return;
-  const n = Math.floor(a.sampleRate * dur);
-  const buf = a.createBuffer(1, n, a.sampleRate);
-  const d = buf.getChannelData(0);
-  for (let i = 0; i < n; i++) {
-    // ring clatter: noise with fast random flutter
-    const flutter = 0.55 + 0.45 * Math.sin(i / 90 + Math.sin(i / 1700) * 6);
-    d[i] = (Math.random() * 2 - 1) * flutter;
-  }
-  const src = a.createBufferSource();
-  src.buffer = buf;
-  const bp = a.createBiquadFilter();
-  bp.type = 'bandpass';
-  bp.Q.value = 0.9;
-  const t = a.currentTime;
-  bp.frequency.setValueAtTime(1800, t);
-  bp.frequency.linearRampToValueAtTime(3600, t + dur);
-  const g = a.createGain();
-  g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(0.22, t + 0.08);
-  g.gain.setValueAtTime(0.22, t + dur * 0.6);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  src.connect(bp).connect(g).connect(a.destination);
-  src.start(t);
-}
-
 /** Light switch click with a faint lamp hum. */
 export function lightClick() {
   const a = ac();

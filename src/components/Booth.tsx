@@ -3,8 +3,9 @@ import type { Settings } from '../types';
 import { capture, startCamera, type Cam } from '../camera';
 import { STYLES, styleCss } from '../filters';
 import { LAYOUTS, cellAspect } from '../layouts';
-import { beep, curtain, lightClick, shutter, unlockAudio } from '../sound';
+import { beep, lightClick, shutter, unlockAudio } from '../sound';
 import { reducedMotion, wait } from '../motion';
+import { BLUR_FRACTION, blurCanvas, isSidewaysPeace, loadHands } from '../gesture';
 import { PROPS, drawProp, faceFrom, iconFace, loadTracker, smooth, type Face, type PropId } from '../props';
 
 const SCREEN_AR = 4 / 3; // camera frames are captured at 4:3
@@ -122,10 +123,9 @@ export function Booth({
 
   useEffect(() => {
     alive.current = true;
-    // Entering: the curtain opens, then the lights click on (.intro in styles.css).
+    // Entering: the curtain opens silently, then the lights click on (.intro in styles.css).
     const timers: number[] = [];
     if (!reducedMotion()) {
-      timers.push(window.setTimeout(() => curtain(1.3), 350));
       timers.push(window.setTimeout(lightClick, 1850));
     }
     // Retakes come straight back to a camera that was already allowed.
@@ -183,6 +183,56 @@ export function Booth({
     };
   }, [propOn, cam]);
 
+  // Easter egg "foto kita blur": a sideways peace sign held to the camera blurs the
+  // picture, and any photo taken while it's held comes out blurred too.
+  const [egg, setEgg] = useState(false);
+  const eggRef = useRef(false);
+  useEffect(() => {
+    if (cam !== 'on') return;
+    let stop = false;
+    let timer = 0;
+    let seen = 0;
+    let lastSeen = 0;
+    const set = (on: boolean) => {
+      if (eggRef.current === on) return;
+      eggRef.current = on;
+      setEgg(on);
+    };
+    loadHands()
+      .then((hands) => {
+        const tick = () => {
+          if (stop) return;
+          const v = videoRef.current;
+          if (v && v.readyState >= 2 && v.videoWidth) {
+            const now = performance.now();
+            const hit = hands.detect(v, now).some(isSidewaysPeace);
+            seen = hit ? seen + 1 : 0;
+            if (hit) lastSeen = now;
+            // Two checks in a row to switch on, a short grace period to switch off (no flicker).
+            if (seen >= 2) set(true);
+            else if (now - lastSeen > 400) set(false);
+          }
+          timer = window.setTimeout(tick, 90);
+        };
+        tick();
+      })
+      .catch(() => {
+        /* no hand tracking on this device: the easter egg just stays off */
+      });
+    return () => {
+      stop = true;
+      window.clearTimeout(timer);
+      set(false);
+    };
+  }, [cam]);
+
+  const eggBlur = () => `blur(${Math.max(2, Math.round((videoRef.current?.clientWidth ?? 600) * BLUR_FRACTION))}px)`;
+  const screenFilter = () => {
+    const base = styleCss(settings.style);
+    if (!egg) return base;
+    return base === 'none' ? eggBlur() : `${base} ${eggBlur()}`;
+  };
+
   /** Shrink the frozen photo into its thumbnail slot. */
   const flyTo = async (slot: number) => {
     const el = freezeRef.current;
@@ -222,6 +272,7 @@ export function Booth({
       setFlash('blink');
     }
     const c = capture(v, propOn ? overlayRef.current : null);
+    if (eggRef.current) blurCanvas(c);
     const next = [...shotsRef.current];
     next[slot] = c;
     shotsRef.current = next;
@@ -316,14 +367,20 @@ export function Booth({
                 muted
                 playsInline
                 className={cam === 'on' ? 'on' : ''}
-                style={{ filter: styleCss(settings.style) }}
+                style={{ filter: screenFilter() }}
               />
               <canvas
                 ref={overlayRef}
                 className={`prop-layer ${cam === 'on' ? 'on' : ''}`}
-                style={{ filter: styleCss(settings.style) }}
+                style={{ filter: screenFilter() }}
                 aria-hidden="true"
               />
+
+              {egg && (
+                <div className="egg-tag" aria-live="polite">
+                  foto kita blur
+                </div>
+              )}
 
               {cam === 'on' && showGuide && (
                 <div className="crop-guide" style={guide} aria-hidden="true">
