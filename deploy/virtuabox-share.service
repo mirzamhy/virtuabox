@@ -1,0 +1,26 @@
+# systemd unit for the photo share server.
+# Copy to /etc/systemd/system/virtuabox-share.service, then:
+#   sudo systemctl daemon-reload && sudo systemctl enable --now virtuabox-share
+[Unit]
+Description=Virtua Box photo share server
+After=network.target
+
+[Service]
+# Adjust to where server/share.mjs lives on the VPS.
+WorkingDirectory=/opt/virtuabox
+ExecStart=/usr/bin/env node server/share.mjs
+Environment=PORT=8790
+Environment=SHARE_DIR=/var/lib/virtuabox/shares
+Environment=SHARE_TTL_DAYS=7
+User=www-data
+Restart=on-failure
+# Hardening: the server only needs to write its photo folder.
+StateDirectory=virtuabox
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/virtuabox
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

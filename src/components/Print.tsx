@@ -4,6 +4,7 @@ import type { LayoutDef } from '../layouts';
 import { printer } from '../sound';
 import { reducedMotion } from '../motion';
 import { downloadRaw } from '../zip';
+import { ShareQR } from './ShareQR';
 
 type Stage = 'printing' | 'released' | 'done' | 'taken';
 
@@ -134,7 +135,10 @@ export function Print({
 
       {stage === 'taken' && (
         <div className="taken" role="dialog" aria-modal="true" aria-label="Strip foto kamu">
-          <img className="taken-strip" src={url} alt="Strip foto kamu" style={{ aspectRatio: `${layout.width} / ${layout.height}` }} />
+          <div className="taken-main">
+            <img className="taken-strip" src={url} alt="Strip foto kamu" style={{ aspectRatio: `${layout.width} / ${layout.height}` }} />
+            <ShareQR url={url} />
+          </div>
           <div className="taken-actions">
             <a className="primary big" href={url} download={fileName()}>
               Unduh PNG
