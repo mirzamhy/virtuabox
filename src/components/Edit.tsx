@@ -297,7 +297,7 @@ export function Edit({
               className="text-input"
               value={edit.caption}
               maxLength={28}
-              placeholder="Contoh: Mirza & Nadia"
+              placeholder="Contoh: D-Fest 2026"
               onChange={(e) => set('caption', e.target.value)}
               aria-label="Teks di bawah strip"
             />
